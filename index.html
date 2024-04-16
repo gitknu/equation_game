@@ -1,0 +1,68 @@
+<html>
+<head>
+<script>
+function generateEquation(numVariables, operatorFunc) {
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = operatorFunc(); 
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+
+    let result = eval(equation.replace('x', unknownVariable));
+
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = operatorFunc(); 
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+
+        result = eval(equation.replace('x', unknownVariable));
+    }
+
+    return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+}
+
+function generateRandomEquation() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const operatorFunc = () => ['*', '/'][Math.floor(Math.random() * 2)];
+    return generateEquation(numVariables, operatorFunc);
+}
+
+function generateRandomEquation2() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const operatorFunc = () => ['+', '-'][Math.floor(Math.random() * 2)];
+    return generateEquation(numVariables, operatorFunc);
+}
+
+ function displayRandomEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    let newEquation;
+
+    const randomNumber = Math.random();
+
+    if (randomNumber < 0.5) {
+        newEquation = generateRandomEquation();
+    } else {
+        newEquation = generateRandomEquation2();
+    }
+
+    equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+}
+    </script>
+    </head>
+<body>
+<button onclick="displayRandomEquation()">Generate Random Equation</button>
+    <div id="equation-container"></div>
+</body>
+</html>
