@@ -21,7 +21,20 @@ function generateRandomEquation() {
     }
     equation += variables[numVariables - 1];
 
-    const result = eval(equation.replace('x', unknownVariable));
+    let result = eval(equation.replace('x', unknownVariable));
+
+    // Loop until result is a natural number and not infinity or NaN
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        // Regenerate the equation
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+
+        result = eval(equation.replace('x', unknownVariable));
+    }
 
     return `${equation} = ${result}`;
 }
