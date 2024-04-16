@@ -2,10 +2,8 @@
 <head>
 <script>
 function generateRandomEquation() {
-    // Generate a random number of variables between 3 and 5
     const numVariables = Math.floor(Math.random() * 3) + 3;
     
-    // Generate random values for variables
     const variables = [];
     for (let i = 0; i < numVariables; i++) {
         variables.push(Math.floor(Math.random() * 6));
@@ -16,19 +14,17 @@ function generateRandomEquation() {
 
     let equation = '';
     for (let i = 0; i < numVariables - 1; i++) {
-        const operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+        const operator = ['*', '/'][Math.floor(Math.random() * 2)]; 
         equation += `${variables[i]} ${operator} `;
     }
     equation += variables[numVariables - 1];
 
     let result = eval(equation.replace('x', unknownVariable));
 
-    // Loop until result is a natural number and not infinity or NaN
     while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
-        // Regenerate the equation
         equation = '';
         for (let i = 0; i < numVariables - 1; i++) {
-            const operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+            const operator = ['*', '/'][Math.floor(Math.random() * 2)]; 
             equation += `${variables[i]} ${operator} `;
         }
         equation += variables[numVariables - 1];
@@ -39,11 +35,55 @@ function generateRandomEquation() {
     return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
 }
 
- function displayRandomEquation() {
-            const equationContainer = document.getElementById('equation-container');
-            const newEquation = generateRandomEquation();
-            equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+function generateRandomEquation2() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['+', '-'][Math.floor(Math.random() * 2)]; 
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+
+    let result = eval(equation.replace('x', unknownVariable));
+
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['+', '-'][Math.floor(Math.random() * 2)]; 
+            equation += `${variables[i]} ${operator} `;
         }
+        equation += variables[numVariables - 1];
+
+        result = eval(equation.replace('x', unknownVariable));
+    }
+
+    return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+}
+
+
+ function displayRandomEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    let newEquation;
+
+    const randomNumber = Math.random();
+
+    if (randomNumber < 0.5) {
+        newEquation = generateRandomEquation();
+    } else {
+        newEquation = generateRandomEquation2();
+    }
+
+    equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+}
     </script>
     </head>
 <body>
