@@ -1,35 +1,40 @@
 <html>
-<body>
+<head>
 <script>
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-function compute() {
-    var signs = [" + ", " - ", " x ", " ÷ "];
-    var num1 = getRandomInt(0, 100);
-    var num2 = getRandomInt(0, 10);
-    var includeZero = Math.random() < 0.5;
-    var sign1 = signs[getRandomInt(0, 3)];
-    var sign2 = signs[getRandomInt(0, 2)];
-    var equation;
+function generateRandomEquation() {
+    // Generate a random number of variables between 3 and 5
+    const numVariables = Math.floor(Math.random() * 3) + 3;
     
-    if (sign2 === " ÷ " && num2 === 0) {
-        num2 = 1; 
+    // Generate random values for variables
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
     }
-    if (includeZero) {
-        equation = num1 + sign1 + num2 + sign2 + "0";
-    } else {
-        equation = num1 + sign1 + num2 + sign2 + getRandomInt(1, 9);
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+        equation += `${variables[i]} ${operator} `;
     }
-    try {
-        var result = eval(equation);
-        document.getElementById("p1").innerHTML = equation + " = " + result;
-    } catch (error) {
-        compute();
-    }
+    equation += variables[numVariables - 1];
+
+    const result = eval(equation.replace('x', unknownVariable));
+
+    return `${equation} = ${result}`;
 }
-</script>
-<input type="button" value="Generate equation" style="font-size:60px;height:200px;width:600px" onclick="compute()">
-<p style="font-size:80px;" id="p1"></p>
+
+ function displayRandomEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            const newEquation = generateRandomEquation();
+            equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+        }
+    </script>
+    </head>
+<body>
+<button onclick="displayRandomEquation()">Generate Random Equation</button>
+    <div id="equation-container"></div>
 </body>
 </html>
