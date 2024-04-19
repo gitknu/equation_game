@@ -1,0 +1,88 @@
+<body onload="displayRandomEquation()">
+    <div id="equation-container"></div>
+    <input type="number" id="x-value">
+    <button onclick="checkXValue()">Check</button>
+    <script>
+        let answeredCorrectly = true; 
+        function generateRandomEquation() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'x';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('x', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+        }
+        function generateRandomEquation2() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'x';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('x', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+        }
+        function displayRandomEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            let newEquation;
+            if (answeredCorrectly) { 
+                const randomNumber = Math.random();
+                if (randomNumber < 0.5) {
+                    newEquation = generateRandomEquation();
+                } else {
+                    newEquation = generateRandomEquation2();
+                }
+                equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+                answeredCorrectly = false; 
+            }
+        }
+        function checkXValue() {
+            const xValue = document.getElementById('x-value').value.trim();
+            const equations = document.getElementById('equation-container').getElementsByTagName('p');
+            const lastEquation = equations[equations.length - 1].textContent;
+            const indexOfX = lastEquation.indexOf('X =');
+            const actualX = lastEquation.substring(indexOfX + 4).trim().split(' ')[0];
+            if (xValue === actualX) {
+                document.getElementById('equation-container').innerHTML = '';
+                answeredCorrectly = true; 
+                displayRandomEquation(); 
+            } else {
+            }
+        }
+    </script>
