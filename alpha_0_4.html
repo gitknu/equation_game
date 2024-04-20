@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body onload="init(); displayRandomEquation();">
+    <div id="webcam-container"></div>
+    <div>
+        <span id="predicted-class" style="display: none;"></span>
+        <div id="circle" class="circle" style="display: none;"></div>
+        <br>
+        ImgClass: <span id="class-value-type">Unknown</span>
+        <br>
+        X Value: <span id="x-value-type">Unknown</span>
+    </div>
+    <div id="equation-container"></div>
+    <button onclick="displayNextEquation()">Next Equation</button>
+    <script>
+let answeredCorrectly = true;
+let mainEqualCounter = 0;
+let keeperEqualCounter = 0;
+let helperChangeCounter = 0;
+const equalDuration = 1500; 
+const keeperThreshold = 750;
+const helperThreshold = 300;
+
+function generateRandomEquation() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+    let result = eval(equation.replace('x', unknownVariable));
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+        result = eval(equation.replace('x', unknownVariable));
+    }
+    return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+}
+
+function generateRandomEquation2() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+    let result = eval(equation.replace('x', unknownVariable));
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+        result = eval(equation.replace('x', unknownVariable));
+    }
+    return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+}
+
+function displayRandomEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    let newEquation;
+    if (answeredCorrectly) {
+        const randomNumber = Math.random();
+        if (randomNumber < 0.5) {
+            newEquation = generateRandomEquation();
+        } else {
+            newEquation = generateRandomEquation2();
+        }
+        equationContainer.innerHTML += '<p>' + newEquation.equation + '</p>';
+        document.getElementById("x-value-type").innerText = newEquation.xValueType;
+        answeredCorrectly = false;
+        resetCounters();
+    }
+}
+
+function displayNextEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    equationContainer.innerHTML = '';
+    answeredCorrectly = true;
+    displayRandomEquation();
+}
+
+function updateCircleColor(predictedClass) {
+    const circle = document.getElementById('circle');
+    if (predictedClass === 'X') {
+        circle.style.backgroundColor = 'green';
+    } else {
+        circle.style.backgroundColor = 'red';
+    }
+}
+
+function resetCounters() {
+    mainEqualCounter = 0;
+    keeperEqualCounter = 0;
+    helperChangeCounter = 0;
+}
+
+let lastClassChangeTime = 0;
+let lastKeeperClassChangeTime = 0;
+
+async function init() {
+    const modelURL = "https://gitknu.github.io/equation_game/model.json";
+    const metadataURL = "https://gitknu.github.io/equation_game/metadata.json";
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+    const flip = true;
+    webcam = new tmImage.Webcam(128, 128, flip);
+    await webcam.setup();
+    await webcam.play();
+    window.requestAnimationFrame(loop);
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
+}
+
+async function loop() {
+    webcam.update();
+    await predict();
+    window.requestAnimationFrame(loop);
+}
+
+async function predict() {
+    const prediction = await model.predict(webcam.canvas);
+    let maxProb = -1;
+    let predictedClass = "";
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        if (prediction[i].probability > maxProb) {
+            maxProb = prediction[i].probability;
+            predictedClass = prediction[i].className;
+            document.getElementById("class-value-type").innerText = predictedClass;
+        }
+    }
+    document.getElementById("predicted-class").innerText = predictedClass;
+    updateCircleColor(predictedClass);
+    const xValueType = parseInt(document.getElementById("x-value-type").innerText);
+    const classValueType = parseInt(document.getElementById("class-value-type").innerText);
+    if (!isNaN(xValueType) && !isNaN(classValueType)) {
+        if (xValueType === classValueType) {
+            const currentTime = Date.now();
+            if (currentTime - lastClassChangeTime >= keeperThreshold && currentTime - lastKeeperClassChangeTime >= helperThreshold) {
+                keeperEqualCounter += 1000 / 60; // Assuming 60 frames per second
+                if (keeperEqualCounter >= equalDuration) {
+                    displayNextEquation();
+                }
+            }
+        } else {
+            helperChangeCounter += 1000 / 60; // Assuming 60 frames per second
+            if (helperChangeCounter >= helperThreshold) {
+                resetCounters();
+                lastClassChangeTime = Date.now();
+            }
+            lastKeeperClassChangeTime = Date.now();
+        }
+    }
+}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</body>
+</html>
