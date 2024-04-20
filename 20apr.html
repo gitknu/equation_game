@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equation Game</title>
+    <style>
+        .circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body onload="init(); displayRandomEquation();">
+    <div id="webcam-container"></div>
+    <div>
+        Predicted Class: <span id="predicted-class">Loading...</span>
+        <div id="circle" class="circle"></div>
+    </div>
+    <div id="equation-container"></div>
+    <!-- Add a button for next equation -->
+    <button onclick="displayNextEquation()">Next Equation</button>
+    <script>
+        let answeredCorrectly = true;
+
+        function generateRandomEquation() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'x';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('x', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+        }
+
+        function generateRandomEquation2() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'x';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('x', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return `${equation} = ${result} [[[ X = ${unknownVariable} ]]]`;
+        }
+
+        function displayRandomEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            let newEquation;
+            if (answeredCorrectly) {
+                const randomNumber = Math.random();
+                if (randomNumber < 0.5) {
+                    newEquation = generateRandomEquation();
+                } else {
+                    newEquation = generateRandomEquation2();
+                }
+                equationContainer.innerHTML += '<p>' + newEquation + '</p>';
+                answeredCorrectly = false;
+            }
+        }
+
+        function displayNextEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            equationContainer.innerHTML = '';
+            answeredCorrectly = true;
+            displayRandomEquation();
+        }
+
+        function updateCircleColor(predictedClass) {
+            const circle = document.getElementById('circle');
+            if (predictedClass === 'X') {
+                circle.style.backgroundColor = 'green';
+            } else {
+                circle.style.backgroundColor = 'red';
+            }
+        }
+
+        let model, webcam, maxPredictions;
+
+        async function init() {
+            const modelURL = "https://gitknu.github.io/equation_game/model.json";
+            const metadataURL = "https://gitknu.github.io/equation_game/metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            const flip = true;
+            webcam = new tmImage.Webcam(128, 128, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            let maxProb = -1;
+            let predictedClass = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                if (prediction[i].probability > maxProb) {
+                    maxProb = prediction[i].probability;
+                    predictedClass = prediction[i].className;
+                }
+            }
+            document.getElementById("predicted-class").innerText = predictedClass;
+            updateCircleColor(predictedClass);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</body>
+</html>
