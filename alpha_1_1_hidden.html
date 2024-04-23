@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #count_score {
+    color:#78edf5;
+            font-size:50px;}
+    #equation-container {
+    color:#f57893;
+            font-size:75px;}
+    
+    #equation-container, #count_score {
+        font-family:'Comic Sans MS', cursive;
+        line-height:1em;
+        font-weight:bold;
+        text-shadow:0px 0px 0 rgb(221,96,123),0px -1px 0 rgb(206,81,108),0px -2px 0 rgb(192,67,94),0px -3px 0 rgb(177,52,79),0px -4px 0 rgb(163,38,65),0px -5px 0 rgb(148,23,50), 0px -6px 0 rgb(134,9,36),0px -7px 6px rgba(0,0,0,0.6),0px -7px 1px rgba(0,0,0,0.5),0px 0px 6px rgba(0,0,0,.2);
+        animation: shadowRotate 1.5s infinite linear;
+    }
+
+    @keyframes shadowRotate {
+        0%, 100% {
+            text-shadow:0px 0px 0 rgb(221,96,123),0px -1px 0 rgb(206,81,108),0px -2px 0 rgb(192,67,94),0px -3px 0 rgb(177,52,79),0px -4px 0 rgb(163,38,65),0px -5px 0 rgb(148,23,50), 0px -6px 0 rgb(134,9,36),0px -7px 6px rgba(0,0,0,0.6),0px -7px 1px rgba(0,0,0,0.5),0px 0px 6px rgba(0,0,0,.2);
+        }
+        25% {
+            text-shadow:0px 0px 0 rgb(221,96,123),-1px -1px 0 rgb(206,81,108),-2px -2px 0 rgb(192,67,94),-3px -3px 0 rgb(177,52,79),-4px -4px 0 rgb(163,38,65),-5px -5px 0 rgb(148,23,50), -6px -6px 0 rgb(134,9,36),-7px -7px 6px rgba(0,0,0,0.6),-7px -7px 1px rgba(0,0,0,0.5),0px 0px 6px rgba(0,0,0,.2);
+        }
+        50% {
+            text-shadow:0px 0px 0 rgb(221,96,123),-1px 0px 0 rgb(206,81,108),-2px 0px 0 rgb(192,67,94),-3px 0px 0 rgb(177,52,79),-4px 0px 0 rgb(163,38,65),-5px 0px 0 rgb(148,23,50), -6px 0px 0 rgb(134,9,36),-7px 0px 6px rgba(0,0,0,0.6),-7px 0px 1px rgba(0,0,0,0.5),0px 0px 6px rgba(0,0,0,.2);
+        }
+        75% {
+            text-shadow:0px 0px 0 rgb(221,96,123),-1px 1px 0 rgb(206,81,108),-2px 2px 0 rgb(192,67,94),-3px 3px 0 rgb(177,52,79),-4px 4px 0 rgb(163,38,65),-5px 5px 0 rgb(148,23,50), -6px 6px 0 rgb(134,9,36),-7px 7px 6px rgba(0,0,0,0.6),-7px 7px 1px rgba(0,0,0,0.5),0px 0px 6px rgba(0,0,0,.2);
+        }
+    }
+</style>
+</head>
+<body onload="init(); displayRandomEquation();">
+    <div id="webcam-container"></div>
+    <div>
+        <span id="predicted-class" style="display: none;"></span>
+        <div id="circle" class="circle" style="display: none;"></div>
+            <div>
+        <h2 id="count_score">Рахунок / Score: <span id="correct-count">0</span></h2>
+    </div>
+        <div style="display: none;">
+            <div id="output"></div>
+            X_val: <span id="x-value-type"></span>
+            C_val: <span id="class-value-type"></span>
+        </div>
+    
+    </div>
+    <h1><div id="equation-container"></div></h1>
+    <button onclick="displayNextEquation()">Далі / Next</button>
+  <script>
+        const outputDiv = document.getElementById('output');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.onstart = () => {
+            console.log('Recognition started.');
+        };
+        recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    outputDiv.textContent += transcript;
+    if (transcript.includes('next') || transcript.includes('darling') || transcript.includes('dolly')) {
+        displayNextEquation();
+    }
+};
+
+        recognition.onend = () => {
+            console.log('Recognition ended.');
+            recognition.start(); 
+        };
+        recognition.start(); 
+    </script>
+    <script>
+        let answeredCorrectly = true;
+        let equalCounter = 0;
+        let correctCount = 0; // Counter for correct inputs
+        const equalDuration = 1000; 
+
+        function generateRandomEquation() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'X';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('X', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('X', unknownVariable));
+            }
+            return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+        }
+
+        function generateRandomEquation2() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'X';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('X', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+        }
+
+        function displayRandomEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            let newEquation;
+            if (answeredCorrectly) {
+                const randomNumber = Math.random();
+                if (randomNumber < 0.5) {
+                    newEquation = generateRandomEquation();
+                } else {
+                    newEquation = generateRandomEquation2();
+                }
+                equationContainer.innerHTML += '<p>' + newEquation.equation + '</p>';
+                document.getElementById("x-value-type").innerText = newEquation.xValueType;
+                answeredCorrectly = false;
+                resetEqualCounter();
+            }
+        }
+
+        function displayNextEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            equationContainer.innerHTML = '';
+            answeredCorrectly = true;
+            displayRandomEquation();
+        }
+
+        function updateCircleColor(predictedClass) {
+        }
+
+        function resetEqualCounter() {
+            equalCounter = 0;
+        }
+
+        let model, webcam, maxPredictions;
+
+        async function init() {
+            const modelURL = "https://gitknu.github.io/equation_game/model.json";
+            const metadataURL = "https://gitknu.github.io/equation_game/metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            const flip = true;
+            webcam = new tmImage.Webcam(256, 256, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            let maxProb = -1;
+            let predictedClass = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                if (prediction[i].probability > maxProb) {
+                    maxProb = prediction[i].probability;
+                    predictedClass = prediction[i].className;
+                    document.getElementById("class-value-type").innerText = predictedClass;
+                }
+            }
+            document.getElementById("predicted-class").innerText = predictedClass;
+            updateCircleColor(predictedClass);
+            const xValueType = parseInt(document.getElementById("x-value-type").innerText);
+            const classValueType = parseInt(document.getElementById("class-value-type").innerText);
+            if (!isNaN(xValueType) && !isNaN(classValueType)) {
+                if (xValueType === classValueType) {
+                    equalCounter += 1000 / 60;
+                    if (equalCounter >= equalDuration) {
+                        displayNextEquation();
+                        correctCount++; // Increment correct input count
+                        document.getElementById("correct-count").innerText = correctCount; // Update count element
+                    }
+                } else {
+                    resetEqualCounter();
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</body>
+</html>
