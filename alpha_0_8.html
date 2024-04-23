@@ -7,7 +7,9 @@
     <div>
         <span id="predicted-class" style="display: none;"></span>
         <div id="circle" class="circle" style="display: none;"></div>
-        
+            <div>
+        <p>Your score: <span id="correct-count">0</span></p>
+    </div>
         <div style="display: non;">
             <div id="output"></div>
             X_val: <span id="x-value-type"></span>
@@ -17,9 +19,6 @@
     </div>
     <div id="equation-container"></div>
     <button onclick="displayNextEquation()">Next</button>
-    <div>
-        <p>Correct Inputs: <span id="correct-count">0</span></p>
-    </div>
   <script>
         const outputDiv = document.getElementById('output');
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
