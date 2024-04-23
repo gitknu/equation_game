@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body onload="init(); displayRandomEquation();">
+    <div id="webcam-container"></div>
+    <div>
+        <span id="predicted-class" style="display: none;"></span>
+        <div id="circle" class="circle" style="display: none;"></div>
+        
+        <div style="display: none;">
+                <div id="output"></div>
+        X_val: <span id="x-value-type"></span>
+        C_val: <span id="class-value-type"></span>
+        </div>
+    
+    </div>
+    <div id="equation-container"></div>
+    <button onclick="displayNextEquation()">Next</button>
+
+    <script>
+        const outputDiv = document.getElementById('output');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.onstart = () => {
+            console.log('Recognition started.');
+        };
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            outputDiv.textContent += transcript;
+            if (transcript.includes('next')) {
+                displayNextEquation();
+            }
+        };
+        recognition.onend = () => {
+            console.log('Recognition ended.');
+            recognition.start(); 
+        };
+        recognition.start(); 
+    </script>
+    <script>
+let answeredCorrectly = true;
+let equalCounter = 0;
+const equalDuration = 500; // 0.5s
+
+function generateRandomEquation() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+    let result = eval(equation.replace('x', unknownVariable));
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+        result = eval(equation.replace('x', unknownVariable));
+    }
+    return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+}
+
+function generateRandomEquation2() {
+    const numVariables = Math.floor(Math.random() * 3) + 3;
+    const variables = [];
+    for (let i = 0; i < numVariables; i++) {
+        variables.push(Math.floor(Math.random() * 6));
+    }
+    const unknownIndex = Math.floor(Math.random() * numVariables);
+    const unknownVariable = variables[unknownIndex];
+    variables[unknownIndex] = 'x';
+    let equation = '';
+    for (let i = 0; i < numVariables - 1; i++) {
+        const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+        equation += `${variables[i]} ${operator} `;
+    }
+    equation += variables[numVariables - 1];
+    let result = eval(equation.replace('x', unknownVariable));
+    while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+        equation = '';
+        for (let i = 0; i < numVariables - 1; i++) {
+            const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+            equation += `${variables[i]} ${operator} `;
+        }
+        equation += variables[numVariables - 1];
+        result = eval(equation.replace('x', unknownVariable));
+    }
+    return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+}
+
+function displayRandomEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    let newEquation;
+    if (answeredCorrectly) {
+        const randomNumber = Math.random();
+        if (randomNumber < 0.5) {
+            newEquation = generateRandomEquation();
+        } else {
+            newEquation = generateRandomEquation2();
+        }
+        equationContainer.innerHTML += '<p>' + newEquation.equation + '</p>';
+        document.getElementById("x-value-type").innerText = newEquation.xValueType;
+        answeredCorrectly = false;
+        resetEqualCounter();
+    }
+}
+
+function displayNextEquation() {
+    const equationContainer = document.getElementById('equation-container');
+    equationContainer.innerHTML = '';
+    answeredCorrectly = true;
+    displayRandomEquation();
+}
+
+function updateCircleColor(predictedClass) {
+}
+
+function resetEqualCounter() {
+    equalCounter = 0;
+}
+
+let model, webcam, maxPredictions;
+
+async function init() {
+    const modelURL = "https://gitknu.github.io/equation_game/model.json";
+    const metadataURL = "https://gitknu.github.io/equation_game/metadata.json";
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+    const flip = true;
+    webcam = new tmImage.Webcam(256, 256, flip);
+    await webcam.setup();
+    await webcam.play();
+    window.requestAnimationFrame(loop);
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
+}
+
+async function loop() {
+    webcam.update();
+    await predict();
+    window.requestAnimationFrame(loop);
+}
+
+async function predict() {
+    const prediction = await model.predict(webcam.canvas);
+    let maxProb = -1;
+    let predictedClass = "";
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        if (prediction[i].probability > maxProb) {
+            maxProb = prediction[i].probability;
+            predictedClass = prediction[i].className;
+            document.getElementById("class-value-type").innerText = predictedClass;
+        }
+    }
+    document.getElementById("predicted-class").innerText = predictedClass;
+    updateCircleColor(predictedClass);
+    const xValueType = parseInt(document.getElementById("x-value-type").innerText);
+    const classValueType = parseInt(document.getElementById("class-value-type").innerText);
+    if (!isNaN(xValueType) && !isNaN(classValueType)) {
+        if (xValueType === classValueType) {
+            equalCounter += 1000 / 60; 
+            if (equalCounter >= equalDuration) {
+                displayNextEquation();
+            }
+        } else {
+            resetEqualCounter();
+        }
+    }
+}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</body>
+</html>
