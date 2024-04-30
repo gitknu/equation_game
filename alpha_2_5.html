@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&display=swap');
+body {
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tunnel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; 
+}
+        #count_score {
+            font-size:5vw;}
+    #equation-container {
+        color: #91bbff;
+            font-size:6vw;}
+    #equation-container, #count_score {
+        line-height:1em;
+        font-weight:bold;
+    }
+     #webcam-container {
+            display: inline-block;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.2);
+        }
+       .z-text {
+      animation: rotateBothAxes 5s linear infinite; 
+      color: #91bbff;
+        font-family: "Sniglet", system-ui;
+  font-weight: 800;
+  font-style: normal;
+      font-size: 50px;
+      text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+    }
+    .z-layer:not(:first-child) {
+      color: blue;
+    }
+        #equation-container:not(:first-child) {
+      color: #91bbff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+     button {
+   font-family: "Sniglet", system-ui;
+  font-weight: 600;
+  font-style: normal;
+  color: white;
+    border: 0;
+    padding: 12px 40px;
+    border-radius: 50px;
+    font-size: 15px;
+    cursor: pointer;
+    outline: 0;
+    background-image: linear-gradient(-180deg, #89C3FF 0%, #1F65C0 100%);
+box-shadow: 0 1rem 1.25rem 0 rgba(22,75,195,0.50), 0 -0.25rem 1.5rem 
+                             rgba(15, 110, 155, 1) inset, 0 0.75rem 0.5rem 
+                             rgba(255,255,255, 0.4) inset, 0 0.25rem 0.5rem 0 
+                             rgba(70, 180, 207, 1) inset;
+
+}
+@keyframes rotateBothAxes {
+  0%, 100% {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+  14% {
+    transform: rotateY(-4deg) rotateX(-4deg);
+  }
+  28% {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+  42% {
+    transform: rotateY(5deg) rotateX(5deg);
+  }
+  56% {
+    transform: rotateY(5deg) rotateX(-4deg);
+  }
+  70% {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+  84% {
+    transform: rotateY(-4deg) rotateX(5deg);
+  }
+}
+</style>
+</head>
+<body onload="init(); displayRandomEquation();">
+    <div class="tunnel"></div>
+
+    
+    <div>
+            <div>
+                  <h1 id="count_score" class="z-text">
+    <span data-z class="z-text">PAX<span style="font-size:67px;">y</span>HOK / SCORE: <span id="correct-count">0</span>
+    <div id="equation-container"></div></span>
+  </h1>
+    </div>
+        <div style="justify-content: center; text-align: center;">
+            <div id="webcam-container"></div><br><br>
+    <button onclick="displayNextEquation()">D a ʌ i / N e x t</button>
+    </div>
+        <div style="display: none;">
+            <div id="output"></div>
+            <span id="predicted-class"></span>
+        <div id="circle" class="circle"></div>
+            X_val: <span id="x-value-type"></span>
+            C_val: <span id="class-value-type"></span>
+        </div>
+    </div>
+  <script>
+        const outputDiv = document.getElementById('output');
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.onstart = () => {
+        };
+     recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.toLowerCase();
+    outputDiv.textContent += transcript;
+    if (transcript.includes('next') || transcript.includes('darling') || transcript.includes('dolly')) {
+        displayNextEquation();
+        triggerAnimation(); 
+    }
+};
+function triggerAnimation() {
+    var duration = 0.3,
+        delay = 0.05;
+    TweenMax.to($button, duration, {scaleY: 1.2, ease: Expo.easeOut});
+    TweenMax.to($button, duration, {scaleX: 1.2, scaleY: 1, ease: Back.easeOut, easeParams: [3], delay: delay});
+    TweenMax.to($button, duration * 1.25, {scaleX: 1, scaleY: 1, ease: Back.easeOut, easeParams: [6], delay: delay * 3 });
+}
+        recognition.onend = () => {
+            recognition.start(); 
+        };
+        recognition.start(); 
+    </script>
+    <script>
+        let answeredCorrectly = true;
+        let equalCounter = 0;
+        let correctCount = 0; 
+        const equalDuration = 750; 
+        function generateRandomEquation() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'X';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('X', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['*', '/'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('X', unknownVariable));
+            }
+            return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+        }
+        function generateRandomEquation2() {
+            const numVariables = Math.floor(Math.random() * 3) + 3;
+            const variables = [];
+            for (let i = 0; i < numVariables; i++) {
+                variables.push(Math.floor(Math.random() * 6));
+            }
+            const unknownIndex = Math.floor(Math.random() * numVariables);
+            const unknownVariable = variables[unknownIndex];
+            variables[unknownIndex] = 'X';
+            let equation = '';
+            for (let i = 0; i < numVariables - 1; i++) {
+                const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                equation += `${variables[i]} ${operator} `;
+            }
+            equation += variables[numVariables - 1];
+            let result = eval(equation.replace('X', unknownVariable));
+            while (!Number.isInteger(result) || !isFinite(result) || isNaN(result)) {
+                equation = '';
+                for (let i = 0; i < numVariables - 1; i++) {
+                    const operator = ['+', '-'][Math.floor(Math.random() * 2)];
+                    equation += `${variables[i]} ${operator} `;
+                }
+                equation += variables[numVariables - 1];
+                result = eval(equation.replace('x', unknownVariable));
+            }
+            return { equation: `${equation} = ${result}`, xValueType: unknownVariable };
+        }
+        function displayRandomEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            let newEquation;
+            if (answeredCorrectly) {
+                const randomNumber = Math.random();
+                if (randomNumber < 0.5) {
+                    newEquation = generateRandomEquation();
+                } else {
+                    newEquation = generateRandomEquation2();
+                }
+                equationContainer.innerHTML += '<p>' + newEquation.equation + '</p>';
+                document.getElementById("x-value-type").innerText = newEquation.xValueType;
+                answeredCorrectly = false;
+                resetEqualCounter();
+            }
+        }
+        function displayNextEquation() {
+            const equationContainer = document.getElementById('equation-container');
+            equationContainer.innerHTML = '';
+            answeredCorrectly = true;
+            displayRandomEquation();
+        }
+        function updateCircleColor(predictedClass) {
+        }
+        function resetEqualCounter() {
+            equalCounter = 0;
+        }
+        let model, webcam, maxPredictions;
+        async function init() {
+            const modelURL = "https://gitknu.github.io/equation_game/model.json";
+            const metadataURL = "https://gitknu.github.io/equation_game/metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            const flip = true;
+            webcam = new tmImage.Webcam(128, 128, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+        }
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            let maxProb = -1;
+            let predictedClass = "";
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                if (prediction[i].probability > maxProb) {
+                    maxProb = prediction[i].probability;
+                    predictedClass = prediction[i].className;
+                    document.getElementById("class-value-type").innerText = predictedClass;
+                }
+            }
+            document.getElementById("predicted-class").innerText = predictedClass;
+            updateCircleColor(predictedClass);
+            const xValueType = parseInt(document.getElementById("x-value-type").innerText);
+            const classValueType = parseInt(document.getElementById("class-value-type").innerText);
+            if (!isNaN(xValueType) && !isNaN(classValueType)) {
+                if (xValueType === classValueType) {
+                    equalCounter += 1000 / 60;
+                    if (equalCounter >= equalDuration) {
+                        displayNextEquation();
+                        correctCount++; 
+                        document.getElementById("correct-count").innerText = correctCount; 
+                    }
+                } else {
+                    resetEqualCounter();
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script src="https://bennettfeely.com/ztext/js/ztext.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.12.1/TweenMax.min.js"></script>
+ <script>
+        var $button = document.querySelector('button');
+    $button.addEventListener('click', function() {
+      var duration = 0.3,
+          delay = 0.05;
+      TweenMax.to($button, duration, {scaleY: 1.2, ease: Expo.easeOut});
+      TweenMax.to($button, duration, {scaleX: 1.2, scaleY: 1, ease: Back.easeOut, easeParams: [3], delay: delay});
+      TweenMax.to($button, duration * 1.25, {scaleX: 1, scaleY: 1, ease: Back.easeOut, easeParams: [6], delay: delay * 3 });
+    });
+    </script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js'>
+  </script>
+<script>
+const t=document.querySelector('.tunnel'),r=new THREE.WebGLRenderer();r.setSize(t.offsetWidth,t.offsetHeight),t.appendChild(r.domElement);const s=new THREE.Scene(),c=new THREE.PerspectiveCamera(65,t.offsetWidth/t.offsetHeight,.001,1e3);c.position.z=400;const a=new THREE.AmbientLight(16777215,.75);s.add(a);const e=[[68.5,185.5],[1,262.5],[270.9,281.9],[345.5,212.8],[178,155.7],[240.3,72.3],[153.4,.6],[52.6,53.3],[68.5,185.5]];for(let t=0;t<e.length;t++)e[t]=new THREE.Vector3(e[t][0],0,e[t][1]);const n=new THREE.CatmullRomCurve3(e),o=new THREE.TubeGeometry(n,100,4,8,!0);const h=new THREE.MeshLambertMaterial({side:THREE.BackSide,vertexColors:THREE.FaceColors});for(let t=0;t<o.faces.length;t++)o.faces[t].color=new THREE.Color("hsl("+Math.floor((Math.random()*20)+200)+",60%,60%)");const i=new THREE.Mesh(o,h);s.add(i);const l=new THREE.PointLight(16777215,1,100);s.add(l);let p=0;function d(){c.aspect=t.offsetWidth/t.offsetHeight,c.updateProjectionMatrix(),r.setSize(t.offsetWidth,t.offsetHeight)}function m(){p+=.00025;const t=n.getPointAt(p%1),e=n.getPointAt((p+.03)%1);c.position.set(t.x,t.y,t.z),c.lookAt(e),l.position.set(e.x,e.y,e.z),r.render(s,c),requestAnimationFrame(m)}requestAnimationFrame(m),window.addEventListener('resize',d,!1);
+</script>
+</body>
+</html>
